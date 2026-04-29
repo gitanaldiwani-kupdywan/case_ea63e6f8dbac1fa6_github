@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>beata_maria_jatkowska_garbulewska_github</title>
+  <style>
+    :root{--bg:#0a1020;--panel:#121b30;--panel2:#17243d;--line:rgba(255,255,255,.10);--ink:#eef4ff;--muted:#a7bbd4;--accent:#60a5fa}
+    *{box-sizing:border-box} html,body{height:100%} body{margin:0;background:radial-gradient(circle at top,#17315a 0,#0b1020 55%);color:var(--ink);font:15px/1.55 Aptos,'Segoe UI',Arial,sans-serif}
+    .center{min-height:100%;display:grid;place-items:center;padding:20px}
+    .panel{width:min(720px,94vw);padding:28px;border-radius:22px;background:linear-gradient(180deg,#111a2d,#17243d);border:1px solid var(--line);box-shadow:0 30px 60px rgba(0,0,0,.30)}
+    h1{margin:0 0 10px;font-size:32px} p{margin:0 0 14px;color:var(--muted)} .meta{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 18px}
+    .chip{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.04);font-size:12px;font-weight:700}
+    input{width:100%;padding:14px 15px;border-radius:12px;border:1px solid var(--line);background:#0d1425;color:var(--ink);font:16px Consolas,Menlo,monospace}
+    button{margin-top:12px;width:100%;padding:14px;border:0;border-radius:12px;background:linear-gradient(90deg,#1d4ed8,#2563eb);color:#fff;font-weight:800;cursor:pointer}
+    .error{min-height:22px;margin-top:10px;color:#ff9ead}
+    .app{display:none;min-height:100%}
+    .hero{padding:26px 28px;border-bottom:1px solid var(--line);background:linear-gradient(135deg,rgba(64,135,255,.22),rgba(16,185,129,.14) 45%,rgba(0,0,0,0) 78%)}
+    .hero h2{margin:0 0 8px;font-size:28px} .hero p{margin:0;color:var(--muted)}
+    .wrap{max-width:1400px;margin:0 auto;padding:18px}
+    .cards{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(0,1fr))}
+    .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;box-shadow:0 20px 44px rgba(0,0,0,.22)}
+    .card.pad{padding:16px} .big{font-size:26px;font-weight:800} .muted{color:var(--muted)}
+    .tabs{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}
+    .tab{padding:9px 12px;border-radius:10px;background:#1d4ed8;color:#fff;font-weight:700;border:0;cursor:pointer}
+    .tab.alt{background:#334155}
+    .tab.active{box-shadow:0 0 0 3px rgba(96,165,250,.15)}
+    .viewer{min-height:68vh;overflow:hidden}
+    .frame{width:100%;height:70vh;border:0;border-radius:18px;background:#fff}
+    .section{padding:18px}
+    .summary{white-space:pre-wrap;word-break:break-word;font:14px/1.55 Consolas,Menlo,monospace;color:#e5eefb}
+    .links{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .btn{display:inline-block;padding:9px 12px;border-radius:10px;background:#1d4ed8;color:#fff;font-weight:700;text-decoration:none}
+    .btn.alt{background:#334155}
+    .empty{padding:18px;color:var(--muted)}
+    @media (max-width:1100px){.cards{grid-template-columns:1fr 1fr}}
+    @media (max-width:720px){.cards{grid-template-columns:1fr} .hero{padding:20px} .wrap{padding:12px}}
+  </style>
+</head>
+<body>
+  <div class="center" id="gate">
+    <div class="panel">
+      <h1>beata_maria_jatkowska_garbulewska_github</h1>
+      <p>Po zalogowaniu dostajesz zaszyfrowany pakiet 1:1, ale interfejs pokazuje tylko czytelnicza wersje: podsumowanie, wykaz, graf i raport finansowy. Pliki techniczne (JSON/PY) sa ukryte.</p>
+      <div class="meta">
+        <span class="chip">tryb czytelnika</span>
+        <span class="chip">pelny katalog w srodku</span>
+        <span class="chip">AES-GCM + PBKDF2</span>
+      </div>
+      <input id="password" type="password" placeholder="Haslo" autocomplete="current-password">
+      <button id="unlock">Otworz zaszyfrowany pakiet</button>
+      <div id="error" class="error"></div>
+    </div>
+  </div>
+
+  <div class="app" id="app"></div>
+
+  <script>
+    const payloadParts = ["payload.000.b64", "payload.001.b64", "payload.002.b64"];
+    const saltB64 = "Gj3R8S1bgEcW3PnE+esOpg==";
+    const ivB64 = "kwb1xLAwHCWcogkf";
+    const iterations = 250000;
+
+    function b64ToBytes(value) {
+      const binary = atob(value);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes;
+    }
+
+    function bytesToText(bytes) {
+      return new TextDecoder().decode(bytes);
+    }
+
+    function resolvePath(basePath, relativePath) {
+      if (!relativePath) return null;
+      if (/^(https?:|mailto:|tel:|data:|javascript:)/i.test(relativePath)) return null;
+      const hashIndex = relativePath.indexOf('#');
+      const hash = hashIndex >= 0 ? relativePath.slice(hashIndex) : '';
+      const clean = hashIndex >= 0 ? relativePath.slice(0, hashIndex) : relativePath;
+      if (!clean) return null;
+      const queryIndex = clean.indexOf('?');
+      const query = queryIndex >= 0 ? clean.slice(queryIndex) : '';
+      const raw = queryIndex >= 0 ? clean.slice(0, queryIndex) : clean;
+      const origin = basePath.split('/');
+      origin.pop();
+      const parts = raw.split('/');
+      for (const part of parts) {
+        if (!part || part === '.') continue;
+        if (part === '..') {
+          if (origin.length) origin.pop();
+          continue;
+        }
+        origin.push(part);
+      }
+      return origin.join('/') + query + hash;
+    }
+
+    async function derive(password, salt) {
+      const material = await crypto.subtle.importKey('raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+      return crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt, iterations, hash: 'SHA-256' },
+        material,
+        { name: 'AES-GCM', length: 256 },
+        false,
+        ['decrypt']
+      );
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<>]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[ch]));
+    }
+
+    function stripTechLinks(html) {
+      return html
+        .replace(/<a\b[^>]*href=["'][^"']+\.(json|py)(\?[^"']*)?["'][^>]*>.*?<\/a>/gis, '')
+        .replace(/<a\b[^>]*href=["'][^"']+\.(json|py)(\?[^"']*)?["'][^>]*\/?>/gis, '');
+    }
+
+    function rewriteHtmlLinks(currentPath, html, urlsByPath) {
+      return html.replace(/(href|src)=["']([^"']+)["']/gi, (match, attr, target) => {
+        const resolved = resolvePath(currentPath, target);
+        if (!resolved) return match;
+        const cleanResolved = resolved.split('#')[0].split('?')[0];
+        const blobUrl = urlsByPath.get(cleanResolved);
+        if (!blobUrl) return match;
+        const suffix = resolved.slice(cleanResolved.length);
+        return `${attr}="${blobUrl}${suffix}"`;
+      });
+    }
+
+    function pickPath(files, regexes, predicate) {
+      const pools = [files.filter(file => file.path.includes('_core/')), files];
+      for (const pool of pools) {
+        for (const regex of regexes) {
+          const found = pool.find(file => regex.test(file.path) && (!predicate || predicate(file.path)));
+          if (found) return found.path;
+        }
+      }
+      return null;
+    }
+
+    function extractCard(doc, needle) {
+      const cards = Array.from(doc.querySelectorAll('.card'));
+      const lowered = needle.toLowerCase();
+      return cards.find(card => (card.querySelector('h3')?.textContent || '').toLowerCase().includes(lowered)) || null;
+    }
+
+    function extractSection(doc, needle) {
+      const lowered = needle.toLowerCase();
+      const headers = Array.from(doc.body.querySelectorAll('h2, h3'));
+      const start = headers.find(header => header.textContent.trim().toLowerCase().includes(lowered));
+      if (!start) return null;
+      const wrapper = doc.createElement('div');
+      let node = start;
+      while (node) {
+        if (node !== start && (node.tagName === 'H2' || node.tagName === 'H3')) break;
+        wrapper.appendChild(node.cloneNode(true));
+        node = node.nextElementSibling;
+      }
+      return wrapper.innerHTML.trim();
+    }
+
+    function buildApp(manifest) {
+      const app = document.getElementById('app');
+      const files = manifest.files;
+      const byPath = new Map(files.map(file => [file.path, file]));
+      const urlsByPath = new Map();
+      const htmlTexts = new Map();
+
+      for (const file of files) {
+        const bytes = b64ToBytes(file.content_b64);
+        let blob;
+        if (file.mime === 'text/html') {
+          const text = stripTechLinks(bytesToText(bytes));
+          htmlTexts.set(file.path, text);
+          blob = new Blob([text], { type: file.mime });
+        } else if (file.mime.startsWith('text/') || file.mime === 'application/json' || file.mime === 'application/javascript') {
+          const text = bytesToText(bytes);
+          blob = new Blob([text], { type: file.mime });
+        } else {
+          blob = new Blob([bytes], { type: file.mime });
+        }
+        urlsByPath.set(file.path, URL.createObjectURL(blob));
+      }
+
+      for (const [path, text] of htmlTexts.entries()) {
+        const oldUrl = urlsByPath.get(path);
+        if (oldUrl) URL.revokeObjectURL(oldUrl);
+        const blob = new Blob([rewriteHtmlLinks(path, text, urlsByPath)], { type: 'text/html' });
+        urlsByPath.set(path, URL.createObjectURL(blob));
+      }
+
+      const reportPath = pickPath(files, [/\/raport_.*_github\.html$/i, /\/raport_.*\.html$/i], path => !/finansowy/i.test(path));
+      const financePath = pickPath(files, [/\/raport_finansowy_.*_github\.html$/i, /\/raport_finansowy_.*\.html$/i]);
+      const graphPath = pickPath(files, [/\/graf_.*_github\.html$/i, /\/graf_.*\.html$/i]);
+      const summaryPath = pickPath(files, [/\/summary\.txt$/i, /summary\.txt$/i]);
+
+      const summaryText = summaryPath ? bytesToText(b64ToBytes(byPath.get(summaryPath).content_b64)).trim() : '';
+      let subjectLine = 'Pakiet raportu';
+      let netWorth = '';
+      let chips = [];
+      let propertySection = '';
+
+      if (reportPath && htmlTexts.has(reportPath)) {
+        const reportDoc = new DOMParser().parseFromString(htmlTexts.get(reportPath), 'text/html');
+        const coreCard = extractCard(reportDoc, 'osoba rdzenia');
+        const coreMuted = coreCard?.querySelector('.muted')?.textContent?.trim();
+        if (coreMuted) subjectLine = coreMuted;
+        const netCard = extractCard(reportDoc, 'model netto');
+        const netValue = netCard?.querySelector('.big')?.textContent?.trim();
+        if (netValue) netWorth = netValue;
+        chips = Array.from(reportDoc.querySelectorAll('.chip')).map(chip => chip.textContent.trim()).slice(0, 4);
+        const sectionHtml = extractSection(reportDoc, 'ksiegi');
+        if (sectionHtml) {
+          propertySection = rewriteHtmlLinks(reportPath, sectionHtml, urlsByPath);
+        }
+      }
+
+      const tabs = [
+        { id: 'summary', label: 'Podsumowanie', enabled: true },
+        { id: 'properties', label: 'Wykaz nieruchomosci', enabled: Boolean(reportPath) },
+        { id: 'net', label: 'Szacowany majatek', enabled: Boolean(financePath || netWorth) },
+        { id: 'report', label: 'Raport glowny', enabled: Boolean(reportPath) },
+        { id: 'graph', label: 'Graf zaleznosci', enabled: Boolean(graphPath) },
+      ].filter(tab => tab.enabled);
+
+      app.innerHTML = `
+        <div class="hero">
+          <h2>${subjectLine}</h2>
+          <p>Zaszyfrowany pakiet prywatny z trybem czytelnika. Widoczne sa tylko podsumowanie, wykaz, graf i raporty; pliki techniczne sa ukryte.</p>
+          <div class="meta">
+            ${chips.map(chip => `<span class="chip">${chip}</span>`).join('')}
+          </div>
+        </div>
+        <div class="wrap">
+          <div class="cards">
+            <div class="card pad"><div class="muted">Podsumowanie</div><div class="big">${summaryText ? 'Gotowe' : 'Brak pliku'}</div><div class="muted">tekstowe wnioski</div></div>
+            <div class="card pad"><div class="muted">Szacowany majatek</div><div class="big">${netWorth || 'Sprawdz raport'}</div><div class="muted">zakres netto</div></div>
+            <div class="card pad"><div class="muted">Raport glowny</div><div class="big">${reportPath ? 'Dostepny' : 'Brak'}</div><div class="muted">szczegoly i wykaz</div></div>
+            <div class="card pad"><div class="muted">Graf relacji</div><div class="big">${graphPath ? 'Dostepny' : 'Brak'}</div><div class="muted">mapa zaleznosci</div></div>
+          </div>
+          <div class="tabs">
+            ${tabs.map(tab => `<button class="tab" data-tab="${tab.id}">${tab.label}</button>`).join('')}
+          </div>
+          <div class="card viewer" id="viewer"></div>
+        </div>
+      `;
+
+      function setActive(tabId) {
+        document.querySelectorAll('.tab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
+      }
+
+      function renderSummary() {
+        const content = summaryText
+          ? `<pre class="summary">${escapeHtml(summaryText)}</pre>`
+          : `<div class="empty">Brak pliku summary.txt w pakiecie.</div>`;
+        document.getElementById('viewer').innerHTML = `<div class="section"><h3>Podsumowanie</h3>${content}</div>`;
+      }
+
+      function renderProperties() {
+        if (propertySection) {
+          document.getElementById('viewer').innerHTML = `<div class="section">${propertySection}</div>`;
+          return;
+        }
+        if (reportPath) {
+          document.getElementById('viewer').innerHTML = `<div class="empty">Wykaz nie zostal wyodrebniony automatycznie. Otworz raport glowny, aby zobaczyc pelna liste.</div>`;
+          return;
+        }
+        document.getElementById('viewer').innerHTML = `<div class="empty">Brak raportu glownego w pakiecie.</div>`;
+      }
+
+      function renderNet() {
+        if (financePath) {
+          document.getElementById('viewer').innerHTML = `<iframe class="frame" src="${urlsByPath.get(financePath)}"></iframe>`;
+          return;
+        }
+        if (netWorth) {
+          document.getElementById('viewer').innerHTML = `<div class="section"><h3>Szacowany majatek</h3><div class="big">${netWorth}</div><p class="muted">Wartosc pobrana z raportu glownego.</p></div>`;
+          return;
+        }
+        document.getElementById('viewer').innerHTML = `<div class="empty">Brak raportu finansowego w pakiecie.</div>`;
+      }
+
+      function renderReport() {
+        if (!reportPath) {
+          document.getElementById('viewer').innerHTML = `<div class="empty">Brak raportu glownego w pakiecie.</div>`;
+          return;
+        }
+        document.getElementById('viewer').innerHTML = `<iframe class="frame" src="${urlsByPath.get(reportPath)}"></iframe>`;
+      }
+
+      function renderGraph() {
+        if (!graphPath) {
+          document.getElementById('viewer').innerHTML = `<div class="empty">Brak grafu relacji w pakiecie.</div>`;
+          return;
+        }
+        document.getElementById('viewer').innerHTML = `<iframe class="frame" src="${urlsByPath.get(graphPath)}"></iframe>`;
+      }
+
+      function handleTab(tabId) {
+        setActive(tabId);
+        if (tabId === 'summary') renderSummary();
+        if (tabId === 'properties') renderProperties();
+        if (tabId === 'net') renderNet();
+        if (tabId === 'report') renderReport();
+        if (tabId === 'graph') renderGraph();
+      }
+
+      document.querySelectorAll('.tab').forEach(btn => {
+        btn.addEventListener('click', () => handleTab(btn.dataset.tab));
+      });
+
+      handleTab(tabs[0]?.id || 'summary');
+    }
+
+    async function unlock() {
+      const error = document.getElementById('error');
+      error.textContent = '';
+      const password = document.getElementById('password').value;
+      if (!password) {
+        error.textContent = 'Podaj haslo.';
+        return;
+      }
+      try {
+        const chunks = [];
+        for (const part of payloadParts) {
+          const response = await fetch(part, { cache: 'no-store' });
+          if (!response.ok) throw new Error(`payload fetch failed: ${response.status}`);
+          chunks.push((await response.text()).trim());
+        }
+        const payloadB64 = chunks.join('');
+        const key = await derive(password, b64ToBytes(saltB64));
+        const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: b64ToBytes(ivB64) }, key, b64ToBytes(payloadB64));
+        const manifest = JSON.parse(bytesToText(new Uint8Array(decrypted)));
+        document.getElementById('gate').style.display = 'none';
+        const app = document.getElementById('app');
+        app.style.display = 'block';
+        buildApp(manifest);
+      } catch (err) {
+        error.textContent = 'Niepoprawne haslo albo uszkodzony pakiet.';
+      }
+    }
+
+    document.getElementById('unlock').addEventListener('click', unlock);
+    document.getElementById('password').addEventListener('keydown', event => { if (event.key === 'Enter') unlock(); });
+  </script>
+</body>
+</html>
